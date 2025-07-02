@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private var currentStreamId: Int = 0
     private lateinit var plusButton: ImageButton
     private lateinit var minusButton:ImageButton
+    private lateinit var spinner: Spinner
 
 
     // Handler for scheduling the periodic sound playback
