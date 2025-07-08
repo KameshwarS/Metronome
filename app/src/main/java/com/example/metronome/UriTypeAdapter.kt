@@ -1,7 +1,6 @@
 package com.example.metronome
 
 import android.net.Uri
-import android.renderscript.Type
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement

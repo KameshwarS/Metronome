@@ -1,23 +1,11 @@
 package com.example.metronome
 
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.media.AudioAttributes
-import android.media.MediaPlayer
-import android.media.SoundPool
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.provider.OpenableColumns
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.Spinner
@@ -27,28 +15,23 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
 
 class MainActivity : AppCompatActivity() {
 
 
-    // Reference to the ViewModel
+
     private lateinit var metronomeViewModel: MetronomeVM
 
-    // --- UI Elements (no longer lateinit for some, as ViewModel manages state) ---
-    private lateinit var playPauseButton: android.widget.Button
-    private lateinit var currentBpmDisplay: android.widget.TextView
-    private lateinit var seekBar: android.widget.SeekBar
-    private lateinit var plusButton: android.widget.ImageButton
-    private lateinit var minusButton: android.widget.ImageButton
-    private lateinit var soundSpinner: android.widget.Spinner
-    private lateinit var addSoundButton: android.widget.Button
+    // UI Elements
+    private lateinit var playPauseButton:Button
+    private lateinit var currentBpmDisplay:TextView
+    private lateinit var seekBar: SeekBar
+    private lateinit var plusButton:ImageButton
+    private lateinit var minusButton:ImageButton
+    private lateinit var soundSpinner:Spinner
+    private lateinit var addSoundButton:Button
 
     // ActivityResultLauncher for picking audio files
     private lateinit var mediaPickerLauncher: ActivityResultLauncher<Array<String>>
@@ -62,10 +45,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 
-        // Initialize ViewModel
+        // Initialize UI elements
         metronomeViewModel = ViewModelProvider(this).get(MetronomeVM::class.java)
-
-        // --- Initialize UI elements ---
         currentBpmDisplay = findViewById(R.id.currentBpmDisplay)
         playPauseButton = findViewById(R.id.button)
         seekBar = findViewById(R.id.bpmSeekBar)
@@ -74,27 +55,26 @@ class MainActivity : AppCompatActivity() {
         soundSpinner = findViewById(R.id.soundSpinner)
         addSoundButton = findViewById(R.id.addSoundButton)
 
-        // --- Set SeekBar min/max programmatically ---
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            seekBar.min = metronomeViewModel.MIN_BPM // Use ViewModel's constants
-            seekBar.max = metronomeViewModel.MAX_BPM // Use ViewModel's constants
+            seekBar.min = metronomeViewModel.MIN_BPM
+            seekBar.max = metronomeViewModel.MAX_BPM
         }
-        // Set initial progress from ViewModel
+
         seekBar.progress = metronomeViewModel.currentBpm.value ?: 90
 
 
-        // --- Observe LiveData from ViewModel to update UI ---
+
         metronomeViewModel.currentBpm.observe(this, Observer { bpm ->
             currentBpmDisplay.text = "$bpm BPM"
-            seekBar.progress = bpm // Update seekbar if BPM changes programmatically
+            seekBar.progress = bpm
         })
 
         metronomeViewModel.isPlaying.observe(this, Observer { isPlaying ->
-            playPauseButton.text = if (isPlaying) "Stop Metronome" else "Play Metronome"
+            playPauseButton.text = if (isPlaying) "Pause" else "Play"
         })
 
         metronomeViewModel.availableSounds.observe(this, Observer { sounds ->
-            // Update the Spinner's adapter whenever the list of available sounds changes
             val adapter = ArrayAdapter(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -103,29 +83,32 @@ class MainActivity : AppCompatActivity() {
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             soundSpinner.adapter = adapter
 
-            // Re-select the currently playing sound if it's still in the list
-            // This is important after adding new sounds or orientation changes
-            val currentSoundId = metronomeViewModel.currentTickSoundId // Get ID from ViewModel
+
+            val currentSoundId = metronomeViewModel.currentTickSoundId
             val currentSoundIndex = sounds.indexOfFirst { it.soundPoolId == currentSoundId }
             if (currentSoundIndex != -1) {
                 soundSpinner.setSelection(currentSoundIndex)
             } else {
-                // If the previously selected sound is no longer available, default to the first
+
                 soundSpinner.setSelection(0)
-                metronomeViewModel.setSelectedSound(0) // Update ViewModel's selected sound
+                metronomeViewModel.setSelectedSound(0)
             }
         })
 
 
-        // --- UI Listeners (Call ViewModel methods) ---
-        seekBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    metronomeViewModel.setBPM(progress) // Update ViewModel's BPM
+                    currentBpmDisplay.text = "$progress BPM"
                 }
             }
-            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) { }
-            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) { }
+            override fun onStartTrackingTouch(seekBar:SeekBar?) { }
+            override fun onStopTrackingTouch(seekBar:SeekBar?) {
+                seekBar?.progress?.let { finalBpm ->
+                    metronomeViewModel.setBPM(finalBpm)
+                }
+            }
         })
 
         minusButton.setOnClickListener {
@@ -161,9 +144,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Opens the system's media picker to allow the user to select an audio file.
-     */
+    // open file for users to pick sound from
     private fun openMediaPicker() {
         mediaPickerLauncher.launch(arrayOf("audio/*"))
     }

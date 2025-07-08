@@ -181,7 +181,6 @@ class MetronomeVM(application: Application) : AndroidViewModel(application) {
         val bpm = _currentBpm.value ?: 90
 
         currentStreamId = soundPool.play(currentTickSoundId, 1f, 1f, 0, 0, 1f)
-        Toast.makeText(appContext, "Starting Metronome: ${bpm} BPM", Toast.LENGTH_SHORT).show()
 
         val delayMillis = (60000L / bpm).toLong()
         handler.postDelayed(tempoRunnable, delayMillis)
@@ -194,7 +193,6 @@ class MetronomeVM(application: Application) : AndroidViewModel(application) {
             currentStreamId = 0
         }
         _isPlaying.value = false
-        Toast.makeText(appContext, "Metronome Stopped", Toast.LENGTH_SHORT).show()
     }
 
     // --- Private Persistence Methods ---
